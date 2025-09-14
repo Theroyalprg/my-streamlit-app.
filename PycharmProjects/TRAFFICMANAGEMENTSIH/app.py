@@ -97,6 +97,20 @@ def dashboard():
         ).add_to(m)
     st_folium(m, height=400)
     
+    # Traffic Camera Feed
+    st.subheader("🎥 Traffic Camera Feed")
+    video_file = "traffic.mp4"
+    cap = cv2.VideoCapture(video_file)
+    
+    if cap.isOpened():
+        ret, frame = cap.read()
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            st.image(frame, use_column_width=True)
+        cap.release()
+    else:
+        st.error("Camera feed unavailable")
+    
     # Charts and IoT Data
     col1, col2 = st.columns(2)
     with col1:
