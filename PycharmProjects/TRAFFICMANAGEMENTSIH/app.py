@@ -14,9 +14,9 @@ if 'logged_in' not in st.session_state:
 
 # Login credentials (demo purposes)
 USERS = {
-    "admin": "admin123",
+    "admin": "sih123",
     "Kuldeep": "jainz",
-    "observer": "view123"
+    "Prakarsh": "batman"
 }
 
 def login_page():
