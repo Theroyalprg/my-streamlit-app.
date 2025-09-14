@@ -14,9 +14,9 @@ if 'logged_in' not in st.session_state:
 
 # Login credentials (demo purposes)
 USERS = {
-    "admin": "sih123",
+    "admin": "thala07",
     "Kuldeep": "jainz",
-    "Prakarsh": "batman"
+    "Prakarsh": "batman07"
 }
 
 def login_page():
@@ -59,10 +59,13 @@ def dashboard():
     }
     
     # Generate realistic traffic data with rush hour simulation
-    np.random.seed(42)
     hour = datetime.now().hour
     rush_multiplier = 2.5 if hour in [8, 9, 17, 18, 19] else 1.0
     data = []
+    
+    # Use current time for seed to get different data each refresh
+    np.random.seed(int(datetime.now().timestamp()) % 1000)
+    
     for loc, coords in locations.items():
         base_traffic = np.random.randint(20, 40)
         vehicles = int(base_traffic * rush_multiplier * np.random.uniform(0.8, 1.2))
@@ -97,12 +100,31 @@ def dashboard():
         ).add_to(m)
     st_folium(m, height=400)
     
-    # Traffic Camera Feed Placeholder
-    st.subheader("🎥 Traffic Camera Feed")
-    st.info("📹 Live camera feed would appear here\n\n(OpenCV integration requires opencv-python package)")
+    # Traffic Camera Feed
+    st.subheader("🎥 Live Traffic Camera Feed")
     
-    # You can replace this with an uploaded image or video component
-    # st.video("traffic.mp4")  # Alternative: use st.video() for MP4 files
+    # For demo purposes - showing a placeholder video feed
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        # Try to load video file, otherwise show demo
+        import os
+        if os.path.exists("traffic.mp4"):
+            st.video("traffic.mp4")
+        else:
+            # Demo placeholder with live updating timestamp
+            st.info("📹 LIVE FEED - Junction Camera #1")
+            st.write(f"🔴 Recording since: {datetime.now().strftime('%H:%M:%S')}")
+            # You can replace this with any demo video URL
+            demo_video = "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+            try:
+                st.video(demo_video)
+            except:
+                st.error("📵 Camera feed temporarily unavailable")
+    
+    with col2:
+        st.metric("Camera Status", "🟢 ONLINE")
+        st.metric("Recording", "🔴 LIVE")
+        st.metric("Quality", "1080p")
     
     # Charts and IoT Data
     col1, col2 = st.columns(2)
