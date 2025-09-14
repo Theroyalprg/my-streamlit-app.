@@ -12,9 +12,7 @@ st.title("🚦 Smart Traffic Management Dashboard")
 # Traffic locations with real Bhopal coordinates
 locations = {
     "LALGHATI": [23.2599, 77.4126], "KAROND": [23.2728, 77.4579],
-    "BAIRAGARH": [23.2156, 77.3539], "INDRAPURI": [23.2156, 77.3825],
-    "NEW MARKET": [23.2590, 77.4030], "MP NAGAR": [23.2420, 77.4270],
-    "ARERA COLONY": [23.2156, 77.4447]
+    "BAIRAGARH": [23.2156, 77.3539], "INDRAPURI": [23.2156, 77.3825]
 }
 
 # Generate realistic traffic data with rush hour simulation
@@ -48,40 +46,14 @@ col3.metric("Congested", f"{len(df[df['vehicles'] >= threshold])}/{len(df)}")
 st.subheader("🗺️ Traffic Map")
 m = folium.Map(location=[23.2599, 77.4126], zoom_start=12)
 
-# Prepare data for heatmap
-heat_data = []
 for _, row in df.iterrows():
-    # Add multiple points around each location based on traffic intensity
-    intensity = row['vehicles'] / 10  # Scale down for heatmap
-    heat_data.append([row['lat'], row['lon'], intensity])
-    
-    # Add surrounding points for better heatmap spread
-    for i in range(int(row['vehicles'] // 15)):  # More points for higher traffic
-        lat_offset = np.random.uniform(-0.005, 0.005)
-        lon_offset = np.random.uniform(-0.005, 0.005)
-        heat_data.append([row['lat'] + lat_offset, row['lon'] + lon_offset, intensity * 0.7])
-
-# Add markers or heatmap based on selection
-if map_type in ["Markers", "Both"]:
-    for _, row in df.iterrows():
-        color = 'red' if row['vehicles'] >= threshold*1.2 else 'orange' if row['vehicles'] >= threshold else 'green'
-        folium.CircleMarker(
-            [row['lat'], row['lon']],
-            radius=max(8, row['vehicles']/3),
-            popup=f"<b>{row['location']}</b><br>Vehicles: {row['vehicles']}<br>Speed: {row['speed']} km/h",
-            color='black', weight=2, fillColor=color, fillOpacity=0.8,
-            tooltip=f"{row['location']}: {row['vehicles']} vehicles"
-        ).add_to(m)
-
-if map_type in ["Heatmap", "Both"]:
-    # Add heatmap layer
-    HeatMap(
-        heat_data,
-        min_opacity=0.2,
-        max_zoom=18,
-        radius=25,
-        blur=15,
-        gradient={0.0: 'green', 0.3: 'yellow', 0.6: 'orange', 1.0: 'red'}
+    color = 'red' if row['vehicles'] >= threshold*1.2 else 'orange' if row['vehicles'] >= threshold else 'green'
+    folium.CircleMarker(
+        [row['lat'], row['lon']],
+        radius=max(8, row['vehicles']/3),
+        popup=f"<b>{row['location']}</b><br>Vehicles: {row['vehicles']}<br>Speed: {row['speed']} km/h",
+        color='black', weight=2, fillColor=color, fillOpacity=0.8,
+        tooltip=f"{row['location']}: {row['vehicles']} vehicles"
     ).add_to(m)
 
 st_folium(m, height=400)
