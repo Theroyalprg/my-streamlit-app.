@@ -15,7 +15,7 @@ if 'logged_in' not in st.session_state:
 # Login credentials (demo purposes)
 USERS = {
     "admin": "admin123",
-    "traffic_manager": "traffic123",
+    "Kuldeep": "jainz",
     "observer": "view123"
 }
 
@@ -39,8 +39,7 @@ def login_page():
                 else:
                     st.error("Invalid username or password!")
     
-    # Demo credentials info
-    st.info("**Demo Credentials:**\n- admin / admin123\n- traffic_manager / traffic123\n- observer / view123")
+
 
 def dashboard():
     # Header with logout
