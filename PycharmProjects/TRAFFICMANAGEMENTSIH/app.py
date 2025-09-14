@@ -102,7 +102,7 @@ def dashboard():
     
     # Display video file
     try:
-        st.video("traffic.mp4")
+        st.video(traffic.mp4)
     except:
         st.error("Traffic camera feed unavailable")
     
