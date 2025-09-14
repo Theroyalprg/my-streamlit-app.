@@ -97,19 +97,12 @@ def dashboard():
         ).add_to(m)
     st_folium(m, height=400)
     
-    # Traffic Camera Feed
+    # Traffic Camera Feed Placeholder
     st.subheader("🎥 Traffic Camera Feed")
-    video_file = "traffic.mp4"
-    cap = cv2.VideoCapture(video_file)
+    st.info("📹 Live camera feed would appear here\n\n(OpenCV integration requires opencv-python package)")
     
-    if cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            st.image(frame, use_column_width=True)
-        cap.release()
-    else:
-        st.error("Camera feed unavailable")
+    # You can replace this with an uploaded image or video component
+    # st.video("traffic.mp4")  # Alternative: use st.video() for MP4 files
     
     # Charts and IoT Data
     col1, col2 = st.columns(2)
