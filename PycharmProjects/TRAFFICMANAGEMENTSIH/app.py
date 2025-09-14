@@ -100,17 +100,11 @@ def dashboard():
     # Traffic Camera Feed
     st.subheader("🎥 Live Traffic Camera Feed")
     
-    # Check if video file exists and display
+    # Display video file
     try:
-        with open("traffic.mp4", "rb") as video_file:
-            video_bytes = video_file.read()
-            st.video(video_bytes)
-    except FileNotFoundError:
-        # Fallback: Show placeholder or upload option
-        st.info("📹 Traffic camera feed unavailable")
-        uploaded_video = st.file_uploader("Upload traffic video", type=['mp4', 'avi', 'mov'])
-        if uploaded_video is not None:
-            st.video(uploaded_video)
+        st.video("traffic.mp4")
+    except:
+        st.error("Traffic camera feed unavailable")
     
     # Charts and IoT Data
     col1, col2 = st.columns(2)
