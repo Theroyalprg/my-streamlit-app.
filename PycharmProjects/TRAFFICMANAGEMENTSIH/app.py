@@ -19,7 +19,6 @@ locations = {
 np.random.seed(42)
 hour = datetime.now().hour
 rush_multiplier = 2.5 if hour in [8, 9, 17, 18, 19] else 1.0
-
 data = []
 for loc, coords in locations.items():
     base_traffic = np.random.randint(20, 40)
@@ -27,7 +26,6 @@ for loc, coords in locations.items():
     speed = max(10, 55 - vehicles * 0.6 + np.random.uniform(-5, 5))
     data.append({"location": loc, "vehicles": vehicles, "speed": round(speed, 1), 
                  "lat": coords[0], "lon": coords[1]})
-
 df = pd.DataFrame(data)
 
 # Sidebar
@@ -45,7 +43,6 @@ col3.metric("Congested", f"{len(df[df['vehicles'] >= threshold])}/{len(df)}")
 # Interactive Map
 st.subheader("🗺️ Traffic Map")
 m = folium.Map(location=[23.2599, 77.4126], zoom_start=12)
-
 for _, row in df.iterrows():
     color = 'red' if row['vehicles'] >= threshold*1.2 else 'orange' if row['vehicles'] >= threshold else 'green'
     folium.CircleMarker(
@@ -55,24 +52,34 @@ for _, row in df.iterrows():
         color='black', weight=2, fillColor=color, fillOpacity=0.8,
         tooltip=f"{row['location']}: {row['vehicles']} vehicles"
     ).add_to(m)
-
 st_folium(m, height=400)
 
-# Charts
+# Charts and IoT Data
 col1, col2 = st.columns(2)
 with col1:
     st.subheader("Traffic by Location")
     st.bar_chart(df.set_index('location')['vehicles'])
     
 with col2:
-    st.subheader("Current Data")
-    st.dataframe(df[['location', 'vehicles', 'speed']], hide_index=True)
+    st.subheader("📡 IoT Sensor Data (Demo)")
+    sensor_df = pd.DataFrame({
+        "Sensor": ["Temperature", "Humidity", "Air Quality", "Noise Level"],
+        "Value": [round(np.random.uniform(25, 40), 1),
+                  round(np.random.uniform(40, 80), 1),
+                  round(np.random.uniform(50, 120), 1),
+                  round(np.random.uniform(30, 90), 1)],
+        "Unit": ["°C", "%", "AQI", "dB"]
+    })
+    st.dataframe(sensor_df, hide_index=True)
+
+# Current Traffic Data
+st.subheader("Current Traffic Data")
+st.dataframe(df[['location', 'vehicles', 'speed']], hide_index=True)
 
 # Alerts
 st.subheader("🚨 Alerts")
 critical = df[df['vehicles'] >= threshold*1.2]
 moderate = df[(df['vehicles'] >= threshold) & (df['vehicles'] < threshold*1.2)]
-
 if len(critical) > 0:
     st.error("🔴 CRITICAL: " + ", ".join([f"{row['location']} ({row['vehicles']})" for _, row in critical.iterrows()]))
 if len(moderate) > 0:
