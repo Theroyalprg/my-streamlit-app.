@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import folium
 from streamlit_folium import st_folium
+from folium.plugins import HeatMap
 from datetime import datetime
 
 # Page setup
@@ -38,8 +39,6 @@ def login_page():
                     st.rerun()
                 else:
                     st.error("Invalid username or password!")
-    
-
 
 def dashboard():
     # Header with logout
@@ -83,9 +82,11 @@ def dashboard():
     col2.metric("Avg Speed", f"{df['speed'].mean():.1f} km/h")
     col3.metric("Congested", f"{len(df[df['vehicles'] >= threshold])}/{len(df)}")
     
-    # Interactive Map
-    st.subheader("🗺️ Traffic Map")
+    # Interactive Map with Circles + Heatmap
+    st.subheader("🗺️ Traffic Map & Heatmap")
     m = folium.Map(location=[23.2599, 77.4126], zoom_start=12)
+
+    # Circle Markers
     for _, row in df.iterrows():
         color = 'red' if row['vehicles'] >= threshold*1.2 else 'orange' if row['vehicles'] >= threshold else 'green'
         folium.CircleMarker(
@@ -95,14 +96,16 @@ def dashboard():
             color='black', weight=2, fillColor=color, fillOpacity=0.8,
             tooltip=f"{row['location']}: {row['vehicles']} vehicles"
         ).add_to(m)
-    st_folium(m, height=400)
+
+    # Heatmap Layer
+    heat_data = [[row['lat'], row['lon'], row['vehicles']] for _, row in df.iterrows()]
+    HeatMap(heat_data, radius=25, blur=15, max_zoom=12).add_to(m)
+
+    st_folium(m, height=450, width=750)
     
     # Traffic Camera Feed Placeholder
     st.subheader("🎥 Traffic Camera Feed")
     st.info("📹 Live camera feed would appear here\n\n(OpenCV integration requires opencv-python package)")
-    
-    # You can replace this with an uploaded image or video component
-    # st.video("traffic.mp4")  # Alternative: use st.video() for MP4 files
     
     # Charts and IoT Data
     col1, col2 = st.columns(2)
@@ -136,8 +139,6 @@ def dashboard():
         st.warning("🟡 MODERATE: " + ", ".join([f"{row['location']} ({row['vehicles']})" for _, row in moderate.iterrows()]))
     if len(critical) == 0 and len(moderate) == 0:
         st.success("✅ All traffic flowing normally!")
-    
-    
 
 # Main app logic
 if st.session_state.logged_in:
