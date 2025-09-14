@@ -1,73 +1,111 @@
 import streamlit as st
-import pandas as pd, numpy as np
+import pandas as pd
+import numpy as np
 import folium
 from streamlit_folium import st_folium
 from datetime import datetime
 
-st.set_page_config(page_title="Traffic Thing", layout="wide")
-st.title("🚦 Traffic Dashboard")
+# Page setup
+st.set_page_config(page_title="Smart Traffic Dashboard", layout="wide")
+st.title("🚦 Smart Traffic Management Dashboard")
 
-# some places in bhopal
-locs = {
+# Traffic locations with real Bhopal coordinates
+locations = {
     "LALGHATI": [23.2599, 77.4126], "KAROND": [23.2728, 77.4579],
-    "BAIRAGARH": [23.2156, 77.3539], "INDRAPURI": [23.2156, 77.3825]
+    "BAIRAGARH": [23.2156, 77.3539], "INDRAPURI": [23.2156, 77.3825],
+    "NEW MARKET": [23.2590, 77.4030], "MP NAGAR": [23.2420, 77.4270],
+    "ARERA COLONY": [23.2156, 77.4447]
 }
 
+# Generate realistic traffic data with rush hour simulation
 np.random.seed(42)
 hour = datetime.now().hour
-rush_mult=2.5 if hour in [8, 9, 17, 18, 19] else 1.0
+rush_multiplier = 2.5 if hour in [8, 9, 17, 18, 19] else 1.0
 
-data_list = []
-for loc, coords in locs.items():
-    base_val = np.random.randint(20, 40)
-    num_cars = int(base_val*rush_mult * np.random.uniform(0.8, 1.2))
-    spd = max(10, 55 - num_cars * 0.6 + np.random.uniform(-5, 5))
-    data_list.append({"location": loc, "num_cars": num_cars, "speed": round(spd, 1), 
-                   "lat": coords[0], "lon": coords[1]})
+data = []
+for loc, coords in locations.items():
+    base_traffic = np.random.randint(20, 40)
+    vehicles = int(base_traffic * rush_multiplier * np.random.uniform(0.8, 1.2))
+    speed = max(10, 55 - vehicles * 0.6 + np.random.uniform(-5, 5))
+    data.append({"location": loc, "vehicles": vehicles, "speed": round(speed, 1), 
+                 "lat": coords[0], "lon": coords[1]})
 
-frame = pd.DataFrame(data_list)
+df = pd.DataFrame(data)
 
-thresh = st.sidebar.slider("Congestion Threshold", 20, 80, 50)
-if st.sidebar.checkbox("Auto Refresh"):
+# Sidebar
+threshold = st.sidebar.slider("Congestion Threshold", 20, 80, 50)
+auto_refresh = st.sidebar.checkbox("Auto Refresh")
+if auto_refresh:
     st.rerun()
 
-c1, c2, c3 = st.columns(3)
-c1.metric("Max Traffic", f"{frame['num_cars'].max()} cars")
-c2.metric("Avg Speed", f"{frame['speed'].mean():.1f} km/h")
-c3.metric("Congested", f"{len(frame[frame['num_cars'] >= thresh])}/{len(frame)}")
+# Metrics
+col1, col2, col3 = st.columns(3)
+col1.metric("Max Traffic", f"{df['vehicles'].max()} vehicles")
+col2.metric("Avg Speed", f"{df['speed'].mean():.1f} km/h")
+col3.metric("Congested", f"{len(df[df['vehicles'] >= threshold])}/{len(df)}")
 
+# Interactive Map
 st.subheader("🗺️ Traffic Map")
 m = folium.Map(location=[23.2599, 77.4126], zoom_start=12)
 
-for i, row in frame.iterrows():
-    color = 'red' if row['num_cars'] >= thresh*1.2 else 'orange' if row['num_cars'] >= thresh else 'green'
-    folium.CircleMarker(
-        [row['lat'], row['lon']],
-        radius=max(8, row['num_cars']/3),
-        popup=f"<b>{row['location']}</b><br>Cars: {row['num_cars']}<br>Speed: {row['speed']} km/h",
-        color='black', weight=2, fillColor=color, 
-        fillOpacity=0.8,
-        tooltip=f"{row['location']}: {row['num_cars']} cars"
+# Prepare data for heatmap
+heat_data = []
+for _, row in df.iterrows():
+    # Add multiple points around each location based on traffic intensity
+    intensity = row['vehicles'] / 10  # Scale down for heatmap
+    heat_data.append([row['lat'], row['lon'], intensity])
+    
+    # Add surrounding points for better heatmap spread
+    for i in range(int(row['vehicles'] // 15)):  # More points for higher traffic
+        lat_offset = np.random.uniform(-0.005, 0.005)
+        lon_offset = np.random.uniform(-0.005, 0.005)
+        heat_data.append([row['lat'] + lat_offset, row['lon'] + lon_offset, intensity * 0.7])
+
+# Add markers or heatmap based on selection
+if map_type in ["Markers", "Both"]:
+    for _, row in df.iterrows():
+        color = 'red' if row['vehicles'] >= threshold*1.2 else 'orange' if row['vehicles'] >= threshold else 'green'
+        folium.CircleMarker(
+            [row['lat'], row['lon']],
+            radius=max(8, row['vehicles']/3),
+            popup=f"<b>{row['location']}</b><br>Vehicles: {row['vehicles']}<br>Speed: {row['speed']} km/h",
+            color='black', weight=2, fillColor=color, fillOpacity=0.8,
+            tooltip=f"{row['location']}: {row['vehicles']} vehicles"
+        ).add_to(m)
+
+if map_type in ["Heatmap", "Both"]:
+    # Add heatmap layer
+    HeatMap(
+        heat_data,
+        min_opacity=0.2,
+        max_zoom=18,
+        radius=25,
+        blur=15,
+        gradient={0.0: 'green', 0.3: 'yellow', 0.6: 'orange', 1.0: 'red'}
     ).add_to(m)
 
 st_folium(m, height=400)
 
+# Charts
 col1, col2 = st.columns(2)
-col1.subheader("Traffic by Location")
-col1.bar_chart(frame.set_index('location')['num_cars'])
+with col1:
+    st.subheader("Traffic by Location")
+    st.bar_chart(df.set_index('location')['vehicles'])
     
-col2.subheader("Current Data")
-col2.dataframe(frame[['location', 'num_cars', 'speed']], hide_index=True)
+with col2:
+    st.subheader("Current Data")
+    st.dataframe(df[['location', 'vehicles', 'speed']], hide_index=True)
 
+# Alerts
 st.subheader("🚨 Alerts")
-crit_jams = frame[frame['num_cars'] >= thresh*1.2]
-mod_jams = frame[(frame['num_cars'] >= thresh) & (frame['num_cars'] < thresh*1.2)]
+critical = df[df['vehicles'] >= threshold*1.2]
+moderate = df[(df['vehicles'] >= threshold) & (df['vehicles'] < threshold*1.2)]
 
-if not crit_jams.empty:
-    st.error("🔴 CRITICAL: " + ", ".join(crit_jams['location']))
-if not mod_jams.empty:
-    st.warning("🟡 MODERATE: " + ", ".join(mod_jams['location']))
-if crit_jams.empty and mod_jams.empty:
+if len(critical) > 0:
+    st.error("🔴 CRITICAL: " + ", ".join([f"{row['location']} ({row['vehicles']})" for _, row in critical.iterrows()]))
+if len(moderate) > 0:
+    st.warning("🟡 MODERATE: " + ", ".join([f"{row['location']} ({row['vehicles']})" for _, row in moderate.iterrows()]))
+if len(critical) == 0 and len(moderate) == 0:
     st.success("✅ All traffic flowing normally!")
 
 st.caption(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
