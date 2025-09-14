@@ -137,7 +137,7 @@ def dashboard():
     if len(critical) == 0 and len(moderate) == 0:
         st.success("✅ All traffic flowing normally!")
     
-    st.caption(f"Last updated: {datetime.now().strftime('%H:%M:%S')}")
+    
 
 # Main app logic
 if st.session_state.logged_in:
