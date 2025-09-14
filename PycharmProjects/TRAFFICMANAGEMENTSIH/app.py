@@ -14,9 +14,9 @@ if 'logged_in' not in st.session_state:
 
 # Login credentials (demo purposes)
 USERS = {
-    "admin": "admin123",
+    "admin": "thala07",
     "Kuldeep": "jainz",
-    "observer": "view123"
+    "Prakarsh": "batman07"
 }
 
 def login_page():
@@ -100,11 +100,12 @@ def dashboard():
     # Traffic Camera Feed
     st.subheader("🎥 Live Traffic Camera Feed")
     
-    # Display video file
-    try:
-        st.video(traffic.mp4)
-    except:
-        st.error("Traffic camera feed unavailable")
+    # Display video file with better error handling
+    import os
+    if os.path.exists("traffic.mp4"):
+        st.video("traffic.mp4")
+    else:
+        st.error("Traffic video file not found. Please ensure 'traffic.mp4' is uploaded to your repository.")
     
     # Charts and IoT Data
     col1, col2 = st.columns(2)
